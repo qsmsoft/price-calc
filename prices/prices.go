@@ -14,12 +14,11 @@ type TaxIncludedPriceJob struct {
 	taxIncludedPrices map[string]string   `json:"tax_included_prices"`
 }
 
-func (job *TaxIncludedPriceJob) LoadData() {
+func (job *TaxIncludedPriceJob) LoadData() error {
 
 	lines, err := job.IOManager.ReadLines()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	prices := make([]float64, len(lines))
@@ -27,9 +26,7 @@ func (job *TaxIncludedPriceJob) LoadData() {
 	for lineIndex, line := range lines {
 		floatPrice, err := strconv.ParseFloat(line, 64)
 		if err != nil {
-			fmt.Println("Canverting price to float failed!")
-			fmt.Println(err)
-			return
+			return err
 		}
 
 		prices[lineIndex] = floatPrice
@@ -37,10 +34,15 @@ func (job *TaxIncludedPriceJob) LoadData() {
 
 	job.InputPrices = prices
 
+	return nil
 }
 
-func (job TaxIncludedPriceJob) Proccess() {
-	job.LoadData()
+func (job TaxIncludedPriceJob) Proccess() error {
+	err := job.LoadData()
+
+	if err != nil {
+		return err
+	}
 
 	result := make(map[string]string)
 
@@ -51,7 +53,8 @@ func (job TaxIncludedPriceJob) Proccess() {
 
 	job.taxIncludedPrices = result
 
-	job.IOManager.WriteResult(job)
+	return job.IOManager.WriteResult(job)
+
 }
 
 func NewTaxIncludedPriceJob(iom iomanager.IOManager, taxRate float64) *TaxIncludedPriceJob {
